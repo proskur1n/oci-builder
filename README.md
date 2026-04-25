@@ -37,7 +37,7 @@ builder.config = {
 builder.addFiles([
     // The destination folder must end with "/". Otherwise, it will be
     // interpreted as a file.
-	{ src: ".", dst: "/app/" },
+    { src: ".", dst: "/app/" },
 ]);
 
 await builder.push("registry.reset.inso-w.at/2026ss-ase-pr-group/26ss-ase-pr-inso-07/appname:tagname");

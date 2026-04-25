@@ -1,4 +1,4 @@
-import s, { parseSpecifier } from "./builder";
+import s, { parseSpecifier } from "./builder.js";
 
 describe("Specifier", () => {
 	it.each([

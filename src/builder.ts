@@ -1,4 +1,4 @@
-import { ImageConfigConfig, Blob, RegistryClient, Descriptor, Credentials } from "./registry";
+import { ImageConfigConfig, Blob, RegistryClient, Descriptor, Credentials } from "./registry.js";
 import { createHash, Hash, randomUUID } from "node:crypto";
 import { createGzipEncoder, createTarPacker, TarPackController } from "modern-tar";
 import path from "node:path";

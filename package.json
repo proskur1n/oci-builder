@@ -1,6 +1,6 @@
 {
 	"name": "oci-builder",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Build Node.js container images without docker",
 	"author": "Andrey Proskurin <andreyproskurin@protonmail.com>",
 	"license": "MIT",
@@ -38,7 +38,7 @@
 		"clean": "rm -fr dist",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"typecheck": "tsc",
+		"typecheck": "tsc --noEmit",
 		"verify": "npm run typecheck && npm run test",
 		"prepublishOnly": "npm run verify"
 	},
