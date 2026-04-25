@@ -278,6 +278,7 @@ export class RegistryClient {
 			++tries;
 
 			const auth = this.authHeaders.get(this.apiUrl);
+			console.log("auth =", auth);
 			if (auth) {
 				params.headers.set("Authorization", auth);
 			}
