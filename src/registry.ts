@@ -335,7 +335,7 @@ async function authenticate(
 	params.delete("realm");
 
 	const url = realm + "?" + params;
-	console.log("Auth for", decodeURIComponent(url));
+	console.log("\tAuth for", decodeURIComponent(url));
 	const headers = new Headers();
 	if (credentials) {
 		headers.set(
@@ -352,6 +352,6 @@ async function authenticate(
 	if (!token) {
 		throw new Error(`Invalid authentication response: ${body}`);
 	}
-	console.log("\tSuccess");
+	console.log("\t\tSuccess");
 	return "Bearer " + token;
 }
