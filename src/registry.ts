@@ -289,15 +289,14 @@ export class RegistryClient {
 			// TODO
 			console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
-			params = {
+			const newp = {
 				headers: {
 					Accept: "application/vnd.oci.image.index.v1+json,application/vnd.oci.image.manifest.v1+json",
 					Authorization: auth!,
 				},
-			};
-			console.log("PARAMS ARE NOW", params);
-
-			const res = await fetch(url, params);
+			} as any;
+			console.log("PARAMS ARE NOW", newp);
+			const res = await fetch(url, newp);
 			if (res.status === 401) {
 				if (tries > 1) {
 					this.throw("Registry rejects specified credentials", res);
