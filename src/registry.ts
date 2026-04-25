@@ -315,7 +315,7 @@ export class RegistryClient {
 			msg += `\nstatus = ${res.status} ${res.statusText}`;
 			msg += `\nheaders = ${JSON.stringify(res.headers, null, 2)}`;
 			// TODO
-			console.log("headers: ", res?.headers);
+			console.log("headers: ", res?.headers + "");
 		}
 		throw new Error(msg);
 	}
@@ -359,5 +359,5 @@ async function authenticate(
 	}
 	console.log("\t\tSuccess");
 	// TODO
-	return "Basic " + token;
+	return "Bearer " + token;
 }
