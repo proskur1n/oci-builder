@@ -284,9 +284,8 @@ export class RegistryClient {
 			}
 			console.log("Printing headers");
 			for (const [k, v] of params.headers.entries()) {
-				console.log(k, v);
+				console.log(" -", k, v);
 			}
-
 			// TODO
 			console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
@@ -359,5 +358,6 @@ async function authenticate(
 		throw new Error(`Invalid authentication response: ${body}`);
 	}
 	console.log("\t\tSuccess");
-	return "Bearer " + token;
+	// TODO
+	return "Basic " + token;
 }
