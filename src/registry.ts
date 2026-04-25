@@ -353,6 +353,7 @@ async function authenticate(
 		throw new Error(`Authentication failed ${res.status} ${res.statusText}`);
 	}
 	const body = await res.text();
+	console.log("TODO body", body);
 	const token = JSON.parse(body)["token"];
 	if (!token) {
 		throw new Error(`Invalid authentication response: ${body}`);
