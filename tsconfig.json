@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"target": "es2022",
+		"moduleResolution": "bundler",
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"noEmit": false,
+		"outDir": "dist",
+		"declaration": true,
+		"rootDir": "src",
+		"types": ["node", "vitest/globals"],
+
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"exactOptionalPropertyTypes": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true
+	},
+	"include": ["src"],
+	"exclude": ["**/*.test.ts"]
+}
