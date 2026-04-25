@@ -282,6 +282,11 @@ export class RegistryClient {
 			if (auth) {
 				params.headers.set("Authorization", auth);
 			}
+			console.log("Printing headers");
+			for (const [k, v] of params.headers.entries()) {
+				console.log(k, v);
+			}
+
 			// TODO
 			console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
