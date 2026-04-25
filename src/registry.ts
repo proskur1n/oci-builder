@@ -281,6 +281,8 @@ export class RegistryClient {
 			if (auth) {
 				params.headers.set("Authorization", auth);
 			}
+			// TODO
+			console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
 			const res = await fetch(url, params);
 			if (res.status === 401) {
@@ -307,6 +309,8 @@ export class RegistryClient {
 			msg += `\nurl = ${res.url}`;
 			msg += `\nstatus = ${res.status} ${res.statusText}`;
 			msg += `\nheaders = ${JSON.stringify(res.headers, null, 2)}`;
+			// TODO
+			console.log("headers: ", res?.headers);
 		}
 		throw new Error(msg);
 	}
