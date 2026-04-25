@@ -299,6 +299,7 @@ export class RegistryClient {
 			const res = await fetch(url, newp);
 			if (res.status === 401) {
 				if (tries > 1) {
+					console.log("TODO error body", await res.text());
 					this.throw("Registry rejects specified credentials", res);
 				}
 				const wwwAuthenticate = res.headers.get("www-authenticate");
