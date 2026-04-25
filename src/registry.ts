@@ -289,6 +289,14 @@ export class RegistryClient {
 			// TODO
 			console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
+			params = {
+				headers: {
+					Accept: "application/vnd.oci.image.index.v1+json,application/vnd.oci.image.manifest.v1+json",
+					Authorization: auth!,
+				},
+			};
+			console.log("PARAMS ARE NOW", params);
+
 			const res = await fetch(url, params);
 			if (res.status === 401) {
 				if (tries > 1) {
