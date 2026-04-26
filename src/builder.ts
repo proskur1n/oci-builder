@@ -101,7 +101,7 @@ export class Builder {
 			}
 		}
 
-		console.log(`Push manifest with ref ${destination.ref}`);
+		console.log(`Push image manifest to ${formatSpecifier(destination)}`);
 		const config: Descriptor = await destClient.pushImageConfig({
 			architecture: ARCH,
 			os: OS,

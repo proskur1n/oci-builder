@@ -299,7 +299,7 @@ export class RegistryClient {
 			const res = await fetch(url, newp);
 			if (res.status === 401) {
 				if (tries > 1) {
-					// console.log("TODO error body", await res.text());
+					console.log("TODO error body", await res.text());
 					this.throw("Registry rejects specified credentials", res);
 				}
 				const wwwAuthenticate = res.headers.get("www-authenticate");
@@ -322,8 +322,7 @@ export class RegistryClient {
 			msg += `\nurl = ${res.url}`;
 			msg += `\nstatus = ${res.status} ${res.statusText}`;
 			// TODO: Headers are not printed.
-			msg += `\nheaders = ${JSON.stringify(res.headers, null, 2)}`;
-			// console.log("headers: ", res?.headers + "");
+			msg += `\nheaders = ${new Map(res.headers.entries())}`;
 		}
 		throw new Error(msg);
 	}
@@ -349,7 +348,7 @@ async function authenticate(
 
 	const url = realm + "?" + params;
 	console.log("\tAuth for", decodeURIComponent(url));
-	const headers = new Headers();
+	const headers = new Headers(); // TODO refactor back to simple object
 	if (credentials) {
 		headers.set(
 			"Authorization",
