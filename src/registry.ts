@@ -357,6 +357,7 @@ async function authenticate(
 	}
 	const res = await fetch(url, { headers });
 	if (!res.ok) {
+		console.log("TODO: ", await res.text());
 		throw new Error(`Authentication failed ${res.status} ${res.statusText}`);
 	}
 	const body = await res.text();
