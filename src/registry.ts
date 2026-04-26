@@ -278,16 +278,16 @@ export class RegistryClient {
 			++tries;
 
 			const auth = this.authHeaders.get(this.apiUrl);
-			console.log("auth =", auth);
+			// console.log("auth =", auth);
 			if (auth) {
 				params.headers.set("Authorization", auth);
 			}
-			console.log("Printing headers");
-			for (const [k, v] of params.headers.entries()) {
-				console.log(" -", k, v);
-			}
-			// TODO
-			console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
+			// console.log("Printing headers");
+			// for (const [k, v] of params.headers.entries()) {
+			// 	console.log(" -", k, v);
+			// }
+			// // TODO
+			// console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
 			const newp = {
 				headers: {
@@ -295,11 +295,11 @@ export class RegistryClient {
 					Authorization: auth!,
 				},
 			} as any;
-			console.log("PARAMS ARE NOW", newp);
+			// console.log("PARAMS ARE NOW", newp);
 			const res = await fetch(url, newp);
 			if (res.status === 401) {
 				if (tries > 1) {
-					console.log("TODO error body", await res.text());
+					// console.log("TODO error body", await res.text());
 					this.throw("Registry rejects specified credentials", res);
 				}
 				const wwwAuthenticate = res.headers.get("www-authenticate");
@@ -321,9 +321,9 @@ export class RegistryClient {
 		if (res) {
 			msg += `\nurl = ${res.url}`;
 			msg += `\nstatus = ${res.status} ${res.statusText}`;
+			// TODO: Headers are not printed.
 			msg += `\nheaders = ${JSON.stringify(res.headers, null, 2)}`;
-			// TODO
-			console.log("headers: ", res?.headers + "");
+			// console.log("headers: ", res?.headers + "");
 		}
 		throw new Error(msg);
 	}
@@ -361,7 +361,6 @@ async function authenticate(
 		throw new Error(`Authentication failed ${res.status} ${res.statusText}`);
 	}
 	const body = await res.text();
-	console.log("TODO body", body);
 	const token = JSON.parse(body)["token"];
 	if (!token) {
 		throw new Error(`Invalid authentication response: ${body}`);

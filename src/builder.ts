@@ -64,8 +64,12 @@ export class Builder {
 			this.auth(destination.domain),
 		);
 
+		console.log(`Pull manifest for ${ARCH}/${OS}`);
 		const baseManifest = await baseClient.pullManifest(this.base.ref, { arch: ARCH, os: OS });
+		console.log("Pull image config");
 		const baseConfig = await baseClient.pullImageConfig(baseManifest.config);
+
+		// console.log("TODO CONFIG", baseConfig);
 
 		for (const descriptor of baseManifest.layers) {
 			console.log(`Pipe layer ${descriptor.digest} to ${formatSpecifier(destination)}`);
@@ -97,6 +101,7 @@ export class Builder {
 			}
 		}
 
+		console.log(`Push manifest with ref ${destination.ref}`);
 		const config: Descriptor = await destClient.pushImageConfig({
 			architecture: ARCH,
 			os: OS,
