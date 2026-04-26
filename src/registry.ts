@@ -353,6 +353,7 @@ async function authenticate(
 		throw new Error(`Invalid www-authenticate: '${wwwAuthenticate}'`);
 	}
 	params.delete("realm");
+	params.delete("error"); // TODO
 
 	const url = realm + "?" + params;
 	console.log("\tAuth for", decodeURIComponent(url));
