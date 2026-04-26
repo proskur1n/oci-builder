@@ -250,6 +250,7 @@ export class RegistryClient {
 					await authenticate(wwwAuthenticate, this.credentials),
 				);
 			} else {
+				console.log("TODO gateway", await res.text());
 				this.throw(`Failed to push blob ${blob.descriptor.digest}`, res);
 			}
 		}
