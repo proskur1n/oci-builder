@@ -80,6 +80,8 @@ export class RegistryClient {
 		}
 		const json = (await res.json()) as ImageIndex | ImageManifest;
 
+		console.log("TODO we have gotten something");
+
 		if (!("manifests" in json)) {
 			// This is a single-platform image.
 			return json;
@@ -289,16 +291,17 @@ export class RegistryClient {
 			// // TODO
 			// console.log(`tries=${tries}, params.headers are ${JSON.stringify(params.headers)}`);
 
-			const newp = {
-				headers: {
-					Accept: "application/vnd.oci.image.index.v1+json,application/vnd.oci.image.manifest.v1+json",
-					Authorization: auth!,
-				},
-			} as any;
+			// const newp = {
+			// 	headers: {
+			// 		Accept: "application/vnd.oci.image.index.v1+json,application/vnd.oci.image.manifest.v1+json",
+			// 		Authorization: auth!,
+			// 	},
+			// } as any;
 			// console.log("PARAMS ARE NOW", newp);
-			const res = await fetch(url, newp);
+			const res = await fetch(url, params);
 			if (res.status === 401) {
-				if (tries > 1) {
+				if (tries > 5) {
+					// TODO: set back to > 1
 					console.log("TODO error body", await res.text());
 					this.throw("Registry rejects specified credentials", res);
 				}
