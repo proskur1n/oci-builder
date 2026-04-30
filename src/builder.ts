@@ -306,9 +306,14 @@ class CreatedLayer implements Layer {
 		};
 
 		console.log(`Push app layer ${this.descriptor.digest}`);
-		await client.pushBlob({
+		const pushed = await client.pushBlob({
 			descriptor: this.descriptor,
 			payload: await fs.readFile(this.backingFile),
 		});
+		if (pushed) {
+			console.log("\tBlob created");
+		} else {
+			console.log("\tAlready exists");
+		}
 	}
 }

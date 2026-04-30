@@ -153,6 +153,7 @@ export class RegistryClient {
 		if (res.status === 404) {
 			return false;
 		}
+		// TODO: use this.throw
 		throw new Error(`Failed to check existence of blob with ref ${d.digest}`);
 	}
 
@@ -219,18 +220,10 @@ export class RegistryClient {
 
 		let tries = 0;
 
-		// FIXME: There is currently a bug in Node.js that prevents us from using `body: blob.payload` directly here.
-		// https://github.com/nodejs/undici/issues/5004#issuecomment-4212579595
-		const body =
-			blob.payload instanceof ReadableStream
-				? await new Response(blob.payload).blob()
-				: blob.payload;
-
 		// TODO: Call this.callApi here instead of duplicating the code.
 		while (true) {
 			++tries;
 
-			console.log(`TODO tries=${tries} this.authHeaders=`, this.authHeaders);
 			const authKey = uploadUrl.toString();
 			const auth = this.authHeaders.get(authKey);
 			if (auth) {
@@ -240,10 +233,7 @@ export class RegistryClient {
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
 				headers,
-				body,
-				// body: blob.payload,
-				// @ts-ignore: See https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1483
-				// duplex: "half",
+				body: blob.payload,
 			});
 			if (res.ok) {
 				return true;
@@ -261,11 +251,6 @@ export class RegistryClient {
 					await authenticate(wwwAuthenticate, this.credentials),
 				);
 			} else {
-				try {
-					console.log("TODO gateway", await res.text());
-				} catch {
-					console.log("TODO no body gateway");
-				}
 				this.throw(`Failed to push blob ${blob.descriptor.digest}`, res);
 			}
 		}
