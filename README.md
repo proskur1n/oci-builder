@@ -7,6 +7,16 @@ It is also influenced by [google/nodejs-container-image-builder](https://github.
 
 `oci-builder` uses the [OCI Distribution Spec](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) under the hood to communicate with registries.
 
+## Installation
+
+WARNING: This library is still in pre-release.
+Breaking changes may occur without a major version bump.
+It is highly recommended to install a concrete version for now.
+
+```
+npm install oci-builder@<version>
+```
+
 ## Usage
 
 ```js
