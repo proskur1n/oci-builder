@@ -71,7 +71,7 @@ export class Builder {
 		const baseConfig = await baseClient.pullImageConfig(baseManifest.config);
 
 		for (const descriptor of baseManifest.layers) {
-			console.log(`Push base layer ${descriptor.digest} to ${formatSpecifier(destination)}`);
+			console.log(`Push base layer ${descriptor.digest}`);
 			const pushed = await destClient.pushBlob({
 				descriptor,
 				payload: await baseClient.pullBlob(descriptor),
@@ -92,9 +92,6 @@ export class Builder {
 				for (const file of addedFiles) {
 					await layer.addFile(file);
 				}
-				console.log(
-					`Push app layer ${layer.descriptor.digest} to ${formatSpecifier(destination)}`,
-				);
 				await layer.push(destClient);
 				layers.push(layer.descriptor);
 				rawDigests.push(`sha256:${layer.rawHash.digest("hex")}`);
@@ -316,6 +313,7 @@ class CreatedLayer implements Layer {
 	async push(client: RegistryClient) {
 		this.controller.finalize();
 		await this.written;
+		console.log(`Push app layer ${this.descriptor.digest}`);
 		await client.pushBlob(this);
 	}
 }
