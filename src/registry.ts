@@ -44,9 +44,10 @@ export type ImageConfigConfig = {
 	WorkingDir?: string;
 };
 
+// TODO: rename
 export type Blob = {
 	descriptor: Descriptor;
-	payload: BodyInit;
+	payload: XMLHttpRequestBodyInit;
 };
 
 export type Credentials = {
@@ -155,12 +156,12 @@ export class RegistryClient {
 		throw new Error(`Failed to check existence of blob with ref ${d.digest}`);
 	}
 
-	async pullBlob(d: Descriptor): Promise<ReadableStream> {
+	async pullBlob(d: Descriptor): Promise<globalThis.Blob> {
 		const res = await this.callApi(`/blobs/${d.digest}`, {
 			method: "GET",
 		});
 		if (res.ok) {
-			return res.body!;
+			return res.blob();
 		} else {
 			this.throw(`Failed to pull layer ${d.digest}`, res);
 		}
@@ -225,6 +226,7 @@ export class RegistryClient {
 				? await new Response(blob.payload).blob()
 				: blob.payload;
 
+		// TODO: Call this.callApi here instead of duplicating the code.
 		while (true) {
 			++tries;
 
@@ -361,6 +363,7 @@ async function authenticate(
 		throw new Error(`Invalid www-authenticate: '${wwwAuthenticate}'`);
 	}
 	params.delete("realm");
+	params.delete("error"); // TODO
 
 	const url = realm + "?" + params;
 	console.log("\tAuth for", decodeURIComponent(url));

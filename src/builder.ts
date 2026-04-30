@@ -1,4 +1,4 @@
-import { ImageConfigConfig, Blob, RegistryClient, Descriptor, Credentials } from "./registry.js";
+import { ImageConfigConfig, RegistryClient, Descriptor, Credentials } from "./registry.js";
 import { createHash, Hash, randomUUID } from "node:crypto";
 import { createGzipEncoder, createTarPacker, TarPackController } from "modern-tar";
 import path from "node:path";
@@ -65,9 +65,9 @@ export class Builder {
 			this.auth(destination.domain),
 		);
 
-		console.log(`Pull manifest for ${ARCH}/${OS}`);
+		console.log(`Pull base manifest for ${ARCH}/${OS}`);
 		const baseManifest = await baseClient.pullManifest(this.base.ref, { arch: ARCH, os: OS });
-		console.log("Pull image config");
+		console.log("Pull base image config");
 		const baseConfig = await baseClient.pullImageConfig(baseManifest.config);
 
 		for (const descriptor of baseManifest.layers) {
@@ -93,7 +93,7 @@ export class Builder {
 					await layer.addFile(file);
 				}
 				await layer.push(destClient);
-				layers.push(layer.descriptor);
+				layers.push(layer.descriptor!);
 				rawDigests.push(`sha256:${layer.rawHash.digest("hex")}`);
 			} finally {
 				await layer.dispose();
@@ -215,7 +215,7 @@ function boldlyAssumeProtocol(registry: string) {
 	return "https";
 }
 
-interface Layer extends Blob {
+interface Layer {
 	rawHash: Hash; // Hash of not gzipped (raw) content.
 }
 
@@ -224,7 +224,7 @@ class CreatedLayer implements Layer {
 	rawHash = createHash("sha256");
 	gzipHash = createHash("sha256");
 	gzipSize = 0;
-	digest?: string;
+	descriptor?: Descriptor;
 	controller: TarPackController;
 	written: Promise<void>;
 
@@ -295,25 +295,20 @@ class CreatedLayer implements Layer {
 		}
 	}
 
-	get descriptor(): Descriptor {
-		if (!this.digest) {
-			this.digest = `sha256:${this.gzipHash.digest("hex")}`;
-		}
-		return {
-			mediaType: "application/vnd.oci.image.layer.v1.tar+gzip",
-			digest: this.digest,
-			size: this.gzipSize,
-		};
-	}
-
-	get payload(): BodyInit {
-		return Readable.toWeb(createReadStream(this.backingFile)) as ReadableStream;
-	}
-
 	async push(client: RegistryClient) {
 		this.controller.finalize();
 		await this.written;
+
+		this.descriptor = {
+			mediaType: "application/vnd.oci.image.layer.v1.tar+gzip",
+			digest: `sha256:${this.gzipHash.digest("hex")}`,
+			size: this.gzipSize,
+		};
+
 		console.log(`Push app layer ${this.descriptor.digest}`);
-		await client.pushBlob(this);
+		await client.pushBlob({
+			descriptor: this.descriptor,
+			payload: await fs.readFile(this.backingFile),
+		});
 	}
 }
