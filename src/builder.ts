@@ -89,10 +89,13 @@ export class Builder {
 		for (const addedFiles of this.newLayers) {
 			const layer = new CreatedLayer();
 			try {
+				console.log("TODO adding files");
 				for (const file of addedFiles) {
 					await layer.addFile(file);
 				}
+				console.log("TODO pushing...");
 				await layer.push(destClient);
+				console.log("TODO done");
 				layers.push(layer.descriptor!);
 				rawDigests.push(`sha256:${layer.rawHash.digest("hex")}`);
 			} finally {
