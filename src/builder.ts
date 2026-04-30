@@ -299,8 +299,11 @@ class CreatedLayer implements Layer {
 	}
 
 	async push(client: RegistryClient) {
+		console.log("TODO finalizing");
 		this.controller.finalize();
+		console.log("TODO awaiting");
 		await this.written;
+		console.log("TODO await done");
 
 		this.descriptor = {
 			mediaType: "application/vnd.oci.image.layer.v1.tar+gzip",
