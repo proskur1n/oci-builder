@@ -271,7 +271,7 @@ class CreatedLayer implements Layer {
 
 			if (stat.isFile()) {
 				const name = dst.endsWith("/") ? path.join(dst, path.basename(src)) : dst;
-				console.log(`Copy ${src} to ${name}`);
+				// console.log(`Copy ${src} to ${name}`);
 				const stream = this.controller.add({
 					name,
 					size: stat.size,
