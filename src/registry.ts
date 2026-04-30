@@ -216,9 +216,11 @@ export class RegistryClient {
 	}
 
 	async pushBlob(blob: AddressableBlob): Promise<boolean> {
+		console.log("TODO pushBlob");
 		if (await this.blobExists(blob.descriptor)) {
 			return false;
 		}
+		console.log("TODO doesnt exist");
 
 		const res = await this.callApi(`/blobs/uploads/`, {
 			method: "POST",
@@ -229,6 +231,7 @@ export class RegistryClient {
 				res,
 			);
 		}
+		console.log("TODO got location");
 
 		const locationHeader = res.headers.get("Location");
 		if (!locationHeader) {
@@ -254,6 +257,7 @@ export class RegistryClient {
 				headers.set("Authorization", auth);
 			}
 
+			console.log("TODO fetch");
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
 				headers,

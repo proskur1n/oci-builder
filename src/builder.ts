@@ -99,6 +99,7 @@ export class Builder {
 				layers.push(layer.descriptor!);
 				rawDigests.push(`sha256:${layer.rawHash.digest("hex")}`);
 			} finally {
+				console.log("TODO disposing");
 				await layer.dispose();
 			}
 		}
