@@ -218,6 +218,13 @@ export class RegistryClient {
 
 		let tries = 0;
 
+		// FIXME: There is currently a bug in Node.js that prevents us from using `body: blob.payload` directly here.
+		// https://github.com/nodejs/undici/issues/5004#issuecomment-4212579595
+		const body =
+			blob.payload instanceof ReadableStream
+				? await new Response(blob.payload).blob()
+				: blob.payload;
+
 		while (true) {
 			++tries;
 
@@ -226,13 +233,6 @@ export class RegistryClient {
 			if (auth) {
 				headers.set("Authorization", auth);
 			}
-
-			// There is currently a bug in Node.js that prevents us from using `body: blob.payload` directly here.
-			// https://github.com/nodejs/undici/issues/5004#issuecomment-4212579595
-			const body =
-				blob.payload instanceof ReadableStream
-					? await new Response(blob.payload).blob()
-					: blob.payload;
 
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
