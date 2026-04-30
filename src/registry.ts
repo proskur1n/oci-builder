@@ -361,11 +361,10 @@ async function authenticate(
 		throw new Error(`Invalid www-authenticate: '${wwwAuthenticate}'`);
 	}
 	params.delete("realm");
-	params.delete("error"); // TODO
 
 	const url = realm + "?" + params;
 	console.log("\tAuth for", decodeURIComponent(url));
-	const headers = new Headers(); // TODO refactor back to simple object
+	const headers = new Headers();
 	if (credentials) {
 		headers.set(
 			"Authorization",
@@ -374,8 +373,13 @@ async function authenticate(
 	}
 	const res = await fetch(url, { headers });
 	if (!res.ok) {
-		console.log("TODO: ", await res.text());
-		throw new Error(`Authentication failed ${res.status} ${res.statusText}`);
+		let text = "";
+		try {
+			text = await res.text();
+		} catch {}
+		throw new Error(
+			`Authentication failed ${res.status} ${res.statusText}` + text ? ": " + text : "",
+		);
 	}
 	const body = await res.text();
 	const token = JSON.parse(body)["token"];
@@ -383,6 +387,5 @@ async function authenticate(
 		throw new Error(`Invalid authentication response: ${body}`);
 	}
 	console.log("\t\tSuccess");
-	// TODO
 	return "Bearer " + token;
 }
