@@ -263,6 +263,7 @@ export class RegistryClient {
 				headers,
 				body: blob.payload,
 			});
+			console.log("TODO after fetch, ok =", res.ok);
 			if (res.ok) {
 				return true;
 			}
