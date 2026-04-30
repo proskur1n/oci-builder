@@ -228,6 +228,7 @@ export class RegistryClient {
 		while (true) {
 			++tries;
 
+			console.log(`TODO tries=${tries} this.authHeaders=`, this.authHeaders);
 			const authKey = uploadUrl.toString();
 			const auth = this.authHeaders.get(authKey);
 			if (auth) {
@@ -293,7 +294,6 @@ export class RegistryClient {
 			++tries;
 
 			const auth = this.authHeaders.get(this.apiUrl);
-			// console.log("auth =", auth);
 			if (auth) {
 				params.headers.set("Authorization", auth);
 			}
@@ -313,8 +313,8 @@ export class RegistryClient {
 			// console.log("PARAMS ARE NOW", newp);
 			const res = await fetch(url, params);
 			if (res.status === 401) {
+				// TODO: set back to > 1
 				if (tries > 5) {
-					// TODO: set back to > 1
 					console.log("TODO error body", await res.text());
 					this.throw("Registry rejects specified credentials", res);
 				}
