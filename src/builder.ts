@@ -315,7 +315,7 @@ class CreatedLayer implements Layer {
 		console.log(`Push app layer ${this.descriptor.digest}`);
 		const pushed = await client.pushBlob({
 			descriptor: this.descriptor,
-			payload: await fs.readFile(this.backingFile),
+			payload: () => Readable.toWeb(createReadStream(this.backingFile)) as ReadableStream,
 		});
 		if (pushed) {
 			console.log("\tBlob created");

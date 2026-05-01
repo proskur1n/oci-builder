@@ -69,7 +69,7 @@ export type ImageConfigConfig = {
 // TODO: rename
 export type AddressableBlob = {
 	descriptor: Descriptor;
-	payload: XMLHttpRequestBodyInit;
+	payload: XMLHttpRequestBodyInit | (() => ReadableStream);
 };
 
 export type Credentials = {
@@ -238,10 +238,6 @@ export class RegistryClient {
 			throw new RegistryError("Missing Location header", res);
 		}
 
-		const headers = new Headers({
-			"Content-Type": "application/octet-stream",
-			"Content-Length": blob.descriptor.size + "",
-		});
 		const uploadUrl = new URL(locationHeader);
 		uploadUrl.searchParams.set("digest", blob.descriptor.digest);
 
@@ -251,17 +247,22 @@ export class RegistryClient {
 		while (true) {
 			++tries;
 
+			const headers = new Headers({
+				"Content-Type": "application/octet-stream",
+				"Content-Length": blob.descriptor.size + "",
+			});
 			const authKey = uploadUrl.toString();
 			const auth = this.authHeaders.get(authKey);
 			if (auth) {
 				headers.set("Authorization", auth);
 			}
 
-			console.log("TODO fetch");
+			const body = typeof blob.payload === "function" ? blob.payload() : blob.payload;
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
 				headers,
-				body: blob.payload,
+				body,
+				duplex: "half",
 			});
 			console.log("TODO after fetch, ok =", res.ok);
 			if (res.ok) {
