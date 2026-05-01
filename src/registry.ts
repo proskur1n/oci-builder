@@ -257,11 +257,13 @@ export class RegistryClient {
 				headers.set("Authorization", auth);
 			}
 
+			console.log("TODO fetch");
 			const body = typeof blob.payload === "function" ? blob.payload() : blob.payload;
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
 				headers,
 				body,
+				// @ts-ignore: https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1483
 				duplex: "half",
 			});
 			console.log("TODO after fetch, ok =", res.ok);
