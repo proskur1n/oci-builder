@@ -258,7 +258,10 @@ export class RegistryClient {
 			}
 
 			console.log("TODO fetch");
-			const body = typeof blob.payload === "function" ? blob.payload() : blob.payload;
+			const body =
+				typeof blob.payload === "function"
+					? await new Response(blob.payload()).blob()
+					: blob.payload;
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
 				headers,
