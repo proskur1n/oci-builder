@@ -1,6 +1,6 @@
 import { ImageConfigConfig, RegistryClient, Descriptor, Credentials } from "./registry.js";
 import { createHash, Hash, randomUUID } from "node:crypto";
-import { createGzipEncoder, createTarPacker, TarPackController } from "modern-tar";
+import { createGzipEncoder, createTarPacker, TarHeader, TarPackController } from "modern-tar";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
@@ -265,19 +265,28 @@ class CreatedLayer implements Layer {
 
 		while (stack.length > 0) {
 			const { src, dst } = stack.pop()!;
-			const stat = await fs.stat(src);
+			const stat = await fs.lstat(src);
 
-			if (stat.isFile()) {
-				const name = dst.endsWith("/") ? path.join(dst, path.basename(src)) : dst;
-				const stream = this.controller.add({
-					name,
+			if (stat.isFile() || stat.isSymbolicLink()) {
+				const header: TarHeader = {
+					name: dst.endsWith("/") ? path.join(dst, path.basename(src)) : dst,
 					size: stat.size,
 					mtime: stat.mtime,
 					mode: stat.mode,
 					uid: 0,
 					gid: 0,
-				});
-				await Readable.toWeb(createReadStream(src)).pipeTo(stream);
+				}
+				if (stat.isFile()) {
+					header.type = "file";
+					const stream = this.controller.add(header);
+					await Readable.toWeb(createReadStream(src)).pipeTo(stream);
+				} else {
+					header.type = "symlink";
+					header.size = 0;
+					header.linkname = await fs.readlink(src);
+					const stream = this.controller.add(header);
+					await stream.close();
+				}
 			} else if (stat.isDirectory()) {
 				if (!dst.endsWith("/")) {
 					throw new Error(`Directory ${src} cannot overwrite non-directory ${dst}`);
