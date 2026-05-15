@@ -44,7 +44,7 @@ builder.config = {
     Entrypoint: ["node", "main.js"],
 };
 
-builder.addFiles([
+builder.addLayer([
     // The destination folder must end with "/". Otherwise, it will be
     // interpreted as a file.
     { src: ".", dst: "/app/" },

@@ -44,7 +44,7 @@ export class Builder {
 		this.base = typeof baseImage === "string" ? parseSpecifier(baseImage) : baseImage;
 	}
 
-	addFiles(files: AddedFile[]) {
+	addLayer(files: AddedFile[]) {
 		this.newLayers.push(files);
 	}
 
