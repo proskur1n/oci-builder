@@ -1,5 +1,27 @@
 import { createHash } from "node:crypto";
 
+export class RegistryError extends Error {
+	public override name = "RegistryError";
+	public response: Response | undefined;
+
+	constructor(msg: string, response?: Response, body?: string) {
+		if (response) {
+			msg += `\nurl = ${response.url}`;
+			msg += `\nstatus = ${response.status} ${response.statusText}`;
+			msg += `\nheaders = {`;
+			for (const [k, v] of response.headers) {
+				msg += `\n  ${k}: ${v}`;
+			}
+			msg += "\n}";
+			if (body != undefined) {
+				msg += `\nbody = ${body}\n`;
+			}
+		}
+		super(msg);
+		this.response = response;
+	}
+}
+
 export type Descriptor = {
 	mediaType: string;
 	digest: string;
@@ -44,9 +66,9 @@ export type ImageConfigConfig = {
 	WorkingDir?: string;
 };
 
-export type Blob = {
+export type AddressableBlob = {
 	descriptor: Descriptor;
-	payload: BodyInit;
+	payload: XMLHttpRequestBodyInit | (() => ReadableStream);
 };
 
 export type Credentials = {
@@ -76,7 +98,7 @@ export class RegistryClient {
 			},
 		});
 		if (!res.ok) {
-			this.throw(`Failed to pull manifest with ref ${ref}`, res);
+			throw new RegistryError(`Failed to pull manifest with ref ${ref}`, res);
 		}
 		const json = (await res.json()) as ImageIndex | ImageManifest;
 
@@ -95,7 +117,7 @@ export class RegistryClient {
 			manifest = json.manifests.find(m => !m.platform);
 		}
 		if (!manifest) {
-			this.throw(`No manifest found for ref ${ref} and ${opts.arch}/${opts.os}`);
+			throw new RegistryError(`No manifest found for ref ${ref} and ${opts.arch}/${opts.os}`);
 		}
 
 		return this.pullImageManifest(manifest.digest);
@@ -110,7 +132,7 @@ export class RegistryClient {
 		if (res.ok) {
 			return await res.json();
 		} else {
-			this.throw(`Failed to pull image index with ref ${ref}`, res);
+			throw new RegistryError(`Failed to pull image index with ref ${ref}`, res);
 		}
 	}
 
@@ -123,7 +145,7 @@ export class RegistryClient {
 		if (res.ok) {
 			return await res.json();
 		} else {
-			this.throw(`Failed to pull image manifest with ref ${ref}`, res);
+			throw new RegistryError(`Failed to pull image manifest with ref ${ref}`, res);
 		}
 	}
 
@@ -136,7 +158,7 @@ export class RegistryClient {
 		if (res.ok) {
 			return await res.json();
 		} else {
-			this.throw(`Failed to pull image config ${d.digest}`, res);
+			throw new RegistryError(`Failed to pull image config ${d.digest}`, res);
 		}
 	}
 
@@ -150,17 +172,17 @@ export class RegistryClient {
 		if (res.status === 404) {
 			return false;
 		}
-		throw new Error(`Failed to check existence of blob with ref ${d.digest}`);
+		throw new RegistryError(`Failed to check existence of blob with ref ${d.digest}`, res);
 	}
 
-	async pullBlob(d: Descriptor): Promise<ReadableStream> {
+	async pullBlob(d: Descriptor): Promise<Blob> {
 		const res = await this.callApi(`/blobs/${d.digest}`, {
 			method: "GET",
 		});
 		if (res.ok) {
-			return res.body!;
+			return res.blob();
 		} else {
-			this.throw(`Failed to pull layer ${d.digest}`, res);
+			throw new RegistryError(`Failed to pull layer ${d.digest}`, res);
 		}
 	}
 
@@ -184,13 +206,13 @@ export class RegistryClient {
 			body: data,
 		});
 		if (!res.ok) {
-			this.throw(`Failed to push manifest ${descriptor.digest}`, res);
+			throw new RegistryError(`Failed to push manifest ${descriptor.digest}`, res);
 		}
 
 		return descriptor;
 	}
 
-	async pushBlob(blob: Blob): Promise<boolean> {
+	async pushBlob(blob: AddressableBlob): Promise<boolean> {
 		if (await this.blobExists(blob.descriptor)) {
 			return false;
 		}
@@ -199,37 +221,45 @@ export class RegistryClient {
 			method: "POST",
 		});
 		if (!res.ok) {
-			this.throw(`Failed to initiate blob push for ${blob.descriptor.digest}`, res);
+			throw new RegistryError(
+				`Failed to initiate blob push for ${blob.descriptor.digest}`,
+				res,
+			);
 		}
 
 		const locationHeader = res.headers.get("Location");
 		if (!locationHeader) {
-			this.throw("Missing Location header", res);
+			throw new RegistryError("Missing Location header", res);
 		}
 
-		const headers = new Headers({
-			"Content-Type": "application/octet-stream",
-			"Content-Length": blob.descriptor.size + "",
-		});
 		const uploadUrl = new URL(locationHeader);
 		uploadUrl.searchParams.set("digest", blob.descriptor.digest);
 
 		let tries = 0;
 
+		// TODO: Call this.callApi here instead of duplicating the code.
 		while (true) {
 			++tries;
 
+			const headers = new Headers({
+				"Content-Type": "application/octet-stream",
+				"Content-Length": blob.descriptor.size + "",
+			});
 			const authKey = uploadUrl.toString();
 			const auth = this.authHeaders.get(authKey);
 			if (auth) {
 				headers.set("Authorization", auth);
 			}
 
+			const body =
+				typeof blob.payload === "function"
+					? await new Response(blob.payload()).blob()
+					: blob.payload;
 			const res = await fetch(uploadUrl, {
 				method: "PUT",
 				headers,
-				body: blob.payload,
-				// @ts-ignore: See https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1483
+				body,
+				// @ts-ignore: https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1483
 				duplex: "half",
 			});
 			if (res.ok) {
@@ -237,18 +267,18 @@ export class RegistryClient {
 			}
 			if (res.status === 401) {
 				if (tries > 1) {
-					this.throw("Registry rejects specified credentials", res);
+					throw new RegistryError("Registry rejects specified credentials", res);
 				}
 				const wwwAuthenticate = res.headers.get("www-authenticate");
 				if (!wwwAuthenticate) {
-					this.throw("Missing www-authenticate header", res);
+					throw new RegistryError("Missing www-authenticate header", res);
 				}
 				this.authHeaders.set(
 					authKey,
 					await authenticate(wwwAuthenticate, this.credentials),
 				);
 			} else {
-				this.throw(`Failed to push blob ${blob.descriptor.digest}`, res);
+				throw new RegistryError(`Failed to push blob ${blob.descriptor.digest}`, res);
 			}
 		}
 	}
@@ -281,15 +311,15 @@ export class RegistryClient {
 			if (auth) {
 				params.headers.set("Authorization", auth);
 			}
-
 			const res = await fetch(url, params);
 			if (res.status === 401) {
-				if (tries > 1) {
-					this.throw("Registry rejects specified credentials", res);
+				// TODO: set back to > 1
+				if (tries > 5) {
+					throw new RegistryError("Registry rejects specified credentials", res);
 				}
 				const wwwAuthenticate = res.headers.get("www-authenticate");
 				if (!wwwAuthenticate) {
-					this.throw("Missing www-authenticate header", res);
+					throw new RegistryError("Missing www-authenticate header", res);
 				}
 				this.authHeaders.set(
 					this.apiUrl,
@@ -300,16 +330,6 @@ export class RegistryClient {
 			}
 		}
 	}
-
-	private throw(msg: string, res?: Response): never {
-		msg += `\napi = ${this.apiUrl}`;
-		if (res) {
-			msg += `\nurl = ${res.url}`;
-			msg += `\nstatus = ${res.status} ${res.statusText}`;
-			msg += `\nheaders = ${JSON.stringify(res.headers, null, 2)}`;
-		}
-		throw new Error(msg);
-	}
 }
 
 async function authenticate(
@@ -317,7 +337,7 @@ async function authenticate(
 	credentials: Credentials | undefined,
 ): Promise<string> {
 	if (!wwwAuthenticate.startsWith("Bearer ")) {
-		throw new Error(`Unknown www-authenticate: '${wwwAuthenticate}'`);
+		throw new RegistryError(`Unknown www-authenticate: '${wwwAuthenticate}'`);
 	}
 
 	const params = new URLSearchParams();
@@ -326,12 +346,12 @@ async function authenticate(
 	}
 	const realm = params.get("realm");
 	if (!realm) {
-		throw new Error(`Invalid www-authenticate: '${wwwAuthenticate}'`);
+		throw new RegistryError(`Invalid www-authenticate: '${wwwAuthenticate}'`);
 	}
 	params.delete("realm");
 
 	const url = realm + "?" + params;
-	console.log("Auth for", decodeURIComponent(url));
+	console.log("\tAuth for", decodeURIComponent(url));
 	const headers = new Headers();
 	if (credentials) {
 		headers.set(
@@ -341,13 +361,13 @@ async function authenticate(
 	}
 	const res = await fetch(url, { headers });
 	if (!res.ok) {
-		throw new Error(`Authentication failed ${res.status} ${res.statusText}`);
+		throw new RegistryError("Authentication failed", res);
 	}
 	const body = await res.text();
 	const token = JSON.parse(body)["token"];
 	if (!token) {
-		throw new Error(`Invalid authentication response: ${body}`);
+		throw new RegistryError("Invalid authentication response", res, body);
 	}
-	console.log("\tSuccess");
+	console.log("\t\tSuccess");
 	return "Bearer " + token;
 }
