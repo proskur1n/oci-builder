@@ -5,7 +5,7 @@ import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
 import { Readable, Writable } from "node:stream";
-import { createReadStream, createWriteStream } from "node:fs";
+import { createReadStream, createWriteStream, Stats } from "node:fs";
 
 const variables = {
 	defaultRegistry: "index.docker.io",
@@ -30,7 +30,7 @@ function mapArchToGoArch(arch: string): string {
 	}
 }
 
-export type AddedFile = { src: string; dst: string };
+export type AddedFile = { src: string; dst: string; ignoreMissing?: boolean };
 
 export class Builder {
 	private readonly base: Specifier;
@@ -264,8 +264,16 @@ class CreatedLayer implements Layer {
 		const stack: AddedFile[] = [file];
 
 		while (stack.length > 0) {
-			const { src, dst } = stack.pop()!;
-			const stat = await fs.lstat(src);
+			const { src, dst, ...opts } = stack.pop()!;
+			let stat: Stats;
+			try {
+				stat = await fs.lstat(src);
+			} catch (e) {
+				if (isErrnoException(e) && e.code === "ENOENT" && opts.ignoreMissing) {
+					continue;
+				}
+				throw e;
+			}
 
 			if (stat.isFile() || stat.isSymbolicLink()) {
 				const header: TarHeader = {
@@ -275,7 +283,7 @@ class CreatedLayer implements Layer {
 					mode: stat.mode,
 					uid: 0,
 					gid: 0,
-				}
+				};
 				if (stat.isFile()) {
 					header.type = "file";
 					const stream = this.controller.add(header);
@@ -324,4 +332,8 @@ class CreatedLayer implements Layer {
 			console.log("\tAlready exists");
 		}
 	}
+}
+
+function isErrnoException(err: unknown): err is NodeJS.ErrnoException {
+	return err instanceof Error && "code" in err;
 }
