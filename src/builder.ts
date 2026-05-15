@@ -55,8 +55,7 @@ export class Builder {
 			this.base.protocol,
 			this.base.domain,
 			this.base.name,
-			undefined, // TODO
-			// this.auth(this.base.domain),
+			this.auth(this.base.domain),
 		);
 		const destClient = new RegistryClient(
 			destination.protocol,

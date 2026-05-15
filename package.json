@@ -1,6 +1,6 @@
 {
 	"name": "oci-builder",
-	"version": "0.0.2",
+	"version": "0.0.4",
 	"description": "Build Node.js container images without docker",
 	"author": "Andrey Proskurin <andreyproskurin@protonmail.com>",
 	"license": "MIT",
